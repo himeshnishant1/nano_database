@@ -10,7 +10,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 class framedesign extends Frame
@@ -311,70 +313,155 @@ class framedesign extends Frame
                        //end of change data of table
                        
                        //start of SELECT statement
-                       else if(query.equals("SELECT"))
+                       else if(query.equals("select"))
                        {
                            ex=1;
                            if(b1.equals("database selected"))
                            {
-                                String table_name="";
-                               for(int count_query=0;count_query<cmd_input.getText().length();count_query++)
-                               {
-                                   char count_ch=cmd_input.getText().charAt(count_query);
-                                   if(count_ch!=' '){
-                                       table_name+=count_ch;
-                                   }
-                                   else
-                                   {
-                                        if(table_name.equals("in"))
-                                        {
-                                            table_name=path;
-                                            count_query++;
-                                            char ch_t='\0';
-                                            while((ch_t=cmd_input.getText().charAt(count_query++))!=' ')
-                                            {
-                                                table_name+=ch_t;
-                                            }
-                                            table_name+=".txt";
-                                            if(new File(table_name).exists())
-                                            {
-                                                change_data ct=new change_data();
-                                                String get_results;
-                                                try {
-                                                    get_results=ct.change(cmd_input.getText().substring(count_query),table_name);
-                                                    if(get_results!=null)
-                                                    {
-                                                        terminal(get_results+"\n");
-                                                    }
-                                                    else
-                                                    {
-                                                        terminal("data modification successfull\n");
-                                                    }
-                                                } catch (IOException ex) {
-                                                    Logger.getLogger(framedesign.class.getName()).log(Level.SEVERE, null, ex);
-                                                }
-                                   
-                                            }
-                                            else
-                                            {
-                                                terminal("table not found\n");
-                                            }
-                                            break;
+                               String table_name=path;
+                               table_name+=cmd_input.getText().substring(cmd_input.getText().lastIndexOf(' ')+1)+".txt";
+                               if(new File(table_name).exists())
+                                {
+                                    FileReader fr=null;
+                                   try {
+                                       String query=cmd_input.getText().substring(cmd_input.getText().indexOf(' ')+1);
+                                       query=query.replaceAll("()+","");
+                                       query=query.trim();
+                                       File f1=new File(table_name);
+                                       fr = new FileReader(f1);
+                                       BufferedReader br=new BufferedReader(fr);
+                                       List<String> list_names=new ArrayList<>();
+                                       List<String> list_allnames=new ArrayList<>();
+                                       List<String> list_tmp=new ArrayList<>();
+                                       String sub_str="";
+                                       for(int itr=0;itr<query.length();itr++)
+                                       {
+                                           char ch_tr=query.charAt(itr);
+                                           if(ch_tr==','||ch_tr==' ')
+                                           {
+                                               if("from".equals(sub_str))
+                                                   break;
+                                               else
+                                               {
+                                                   list_names.add(sub_str);
+                                                   sub_str="";
+                                               }
+                                           }
+                                           else
+                                           {
+                                               sub_str+=ch_tr;
+                                           }
                                        }
-                                       else
-                                        {
-                                            table_name="";
-                                        }
+                                       int size=list_names.size();
+                                       int arr[]=new int[size];
+                                       String line="";
+                                       try {
+                                           for(int count=0;(line=br.readLine())!=null;count++)
+                                           {
+                                               if(count==2)
+                                               {
+                                                   for(String s:list_names)
+                                                   {
+                                                       if(!line.contains(s))
+                                                       {
+                                                           terminal(s+" Column not found\n");
+                                                           return;
+                                                       }
+                                                   }
+                                                   
+                                                   String disp_colum_names="";
+                                                   
+                                                   for(int count1=0;count1<size;count1++)
+                                                   {
+                                                       sub_str="";
+                                                       int ct=0;
+                                                       for(int count12=0;count12<line.length();count12++)
+                                                       {
+                                                           char ch_itr=line.charAt(count12);
+                                                           if(ch_itr==';')
+                                                           {
+                                                               list_allnames.add(sub_str);
+                                                               if(list_names.get(count1).equalsIgnoreCase(sub_str))
+                                                               {
+                                                                   disp_colum_names+=list_names.get(count1)+" | ";
+                                                                   arr[count1]=ct;
+                                                               }
+                                                               ct++;
+                                                               sub_str="";
+                                                           }
+                                                           else
+                                                           {
+                                                               sub_str+=ch_itr;
+                                                           }
+                                                       }
+                                                   }
+                                                   
+                                                   terminal(disp_colum_names.substring(0,disp_colum_names.lastIndexOf('|'))+"\n");
+                                                   String tmp="";
+                                                   for(int count12=0;count12<disp_colum_names.length();count12++)
+                                                   {
+                                                        tmp+="-";
+                                                   }
+                                                   terminal(tmp+"\n");
+                                                   
+                                               }
+                                               else if(count>2)
+                                               {
+                                                   sub_str="";
+                                                   for(int count1=0;count1<line.length();count1++)
+                                                   {
+                                                       char ch_itr=line.charAt(count1);
+                                                       if(ch_itr==';')
+                                                       {
+                                                           list_tmp.add(sub_str);
+                                                           sub_str="";
+                                                       }
+                                                       else
+                                                           sub_str+=ch_itr;
+                                                   }
+                                                   try
+                                                   {
+                                                       String tmp="";
+                                                       for(int count1=0;count1<size;count1++)
+                                                       {
+                                                           tmp+=list_tmp.get(arr[count1])+" | ";
+                                                       }
+                                                       terminal(tmp.substring(0,tmp.lastIndexOf('|'))+"\n");
+                                                   }
+                                                   catch(IndexOutOfBoundsException e)
+                                                   {
+                                                       System.out.println(e);
+                                                   }
+                                                   list_tmp.removeAll(list_tmp);
+                                               }
+                                           }
+                                       } catch (IOException ex) {
+                                           System.out.print(ex);
+                                       }
+                                   } catch (FileNotFoundException ex) {
+                                       System.out.print(ex);
+                                   } finally {
+                                       try {
+                                           fr.close();
+                                       } catch (IOException ex) {
+                                           Logger.getLogger(framedesign.class.getName()).log(Level.SEVERE, null, ex);
+                                       }
                                    }
-                               }
-                           }
-                           else
-                           {
-                               terminal("database not selected\n");
-                           }
-                           cmd_input.setText(null);
+                                }
+                                else
+                                {
+                                    terminal("table not found\n");
+                                }
+                            }
+                            else
+                            {
+                                terminal("database not selected\n");
+                            }
+                            cmd_input.setText(null);
                        }
                        //end of SELECT statement
                        
+                       //delete a table
                        else if(query.equals("deletetable"))
                        {
                            ex=1;
@@ -391,6 +478,7 @@ class framedesign extends Frame
                            }
                            cmd_input.setText(null);
                        }//end of delete a table
+                       
                        
                        //Not a valid Query
                        if((i==cmd_input.getText().length()-1)&&(ex!=1)&&(cmd_input.getText()!=null))
