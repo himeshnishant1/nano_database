@@ -248,6 +248,9 @@ class framedesign extends Frame
                        }//display ends
                        
                        //change data of table
+                       /*
+                       change in <table_name> column_name=new_data where column_name(s)=column_data(s)
+                       */
                        else if(query.equals("change"))
                        {
                            ex=1;
@@ -312,7 +315,7 @@ class framedesign extends Frame
                        }
                        //end of change data of table
                        
-                       //start of SELECT statement
+                       //start of select statement <select column_names(s) from table_name>
                        else if(query.equals("select"))
                        {
                            ex=1;

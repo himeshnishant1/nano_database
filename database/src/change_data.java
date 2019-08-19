@@ -4,182 +4,188 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 class change_data
 {
-    public String change(String data_to_change,String path)throws IOException
+    public String change(String query,String path)throws IOException
     {
-            data_to_change+="&&";
-            File f1=new File(path);
-            String tmp_path="tmp.txt";
-            BufferedReader br;
-            FileWriter fw;
-            FileReader fr = new FileReader(f1);
-            br = new BufferedReader(fr);
-            fw = new FileWriter(tmp_path);
-            String cond_colum_name[] = null;
-            int cond_colum_data[] = null;
-            int colum[]=null;
-            String column_names="";
-            int size=0;
-            boolean found=false;
-            for(int count=0;count<data_to_change.length();count++)
+        query+=" ";
+        List<String> match_columns=new ArrayList<>();
+        List<String> match_columns_data=new ArrayList<>();
+        List<String> datatype=new ArrayList<>();
+        List<String> columns=new ArrayList<>();
+        List<String> columns_data=new ArrayList<>();
+        String column_change="";
+        String column_change_data="";
+        String sub="";
+        boolean check=false;
+        
+        File f1=new File(path);
+        FileReader fr=new FileReader(f1);
+        File f2=new File("tmp.txt");
+        FileWriter fw=new FileWriter(f2);
+        
+        String line="";
+        try( BufferedReader br=new BufferedReader(fr);BufferedWriter bw=new BufferedWriter(fw))
+        {   
+            for(int count=0;count<query.length();count++)
             {
-                String line;
-                int column=-1;
-                for(int i=0;(line=br.readLine())!=null;i++)
+                char ch=query.charAt(count);
+                if(ch=='=')
                 {
-                    if(i==2)
+                    if(check==true)
                     {
-                        column_names=line;
-                        for(int j=0;j<line.lastIndexOf(";");)
-                        {
-                            column++;
-                            if(data_to_change.substring(0,data_to_change.indexOf("(")).equals(line.substring(0,line.indexOf(";"))))
-                            {
-                                String condition=data_to_change.substring(data_to_change.indexOf("w"));
-                                String find_where="";
-                                int index_where=0;
-                                while(!"where".equals(find_where))
-                                {
-                                    //System.out.println("find where ="+find_where);
-                                    find_where+=condition.charAt(index_where++);
-                                }
-                                condition=condition.substring(index_where+1);
-                                for(int l=0;l<condition.lastIndexOf("&&");l++)
-                                {
-                                    char ch1=condition.charAt(l);
-                                    if(ch1=='&')
-                                    {
-                                        l++;
-                                        size++;
-                                    }
-                                }
-                                size++;
-                                //System.out.println("\nsize ="+size);
-                                cond_colum_name=new String[size];
-                                cond_colum_data=new int[size];
-                                colum=new int[size];
-                                String sub_condition="";
-                                //System.out.println("Condition ="+condition);
-                                for(int l=0,a=0;l<condition.length();)
-                                {
-                                    //System.out.println("count "+count+"\ni "+i+"\nj "+j+"\nl "+l);
-                                    char ch1=condition.charAt(l);
-                                    switch (ch1) {
-                                        case '=':
-                                            cond_colum_name[a]=sub_condition;
-                                            //System.out.println("cond_colum_name["+a+"] = "+cond_colum_name[a]);
-                                            sub_condition="";
-                                            break;
-                                        case '&':
-                                            cond_colum_data[a]=Integer.parseInt(sub_condition);
-                                            //System.out.println("cond_colum_data["+a+"] = "+cond_colum_data[a]);
-                                            a++;l++;
-                                            sub_condition="";
-                                            break;
-                                        default:
-                                            sub_condition+=ch1;
-                                            //System.out.println("cond_sub = "+sub_condition);
-                                            break;
-                                    }
-                                    l++;
-                                }
-                            }
-                            j=line.indexOf(";");
-                            line=line.substring(line.indexOf(";")+1);
-                        }
+                        match_columns.add(sub);
                     }
-                    /*for(int test=0;test<size;test++)
+                    else
                     {
-                    System.out.println(cond_colum_name[test]+cond_colum_data[test]);
-                    }*/
-                    if(i>2)
+                        column_change=sub;
+                    }
+                    sub="";
+                    count++;
+                    while((ch=query.charAt(count))!=' ')
                     {
-                        //System.out.println("i "+i);
-                        //System.out.println("line = "+line);
-                        String tmp_line=line;
-                        //testing
-                        int ct=0;
-                        for(int j=0;j<tmp_line.lastIndexOf(";")+1;)
+                        sub+=ch;
+                        count++;
+                    }
+                    if(check==true)
+                        match_columns_data.add(sub);
+                    else
+                        column_change_data=sub;
+                    sub="";
+                }
+                else if(ch==' ')
+                {
+                    if("where".equals(sub))
+                        check=true;
+                    sub="";
+                }
+                else
+                {
+                    sub+=ch;
+                }
+            }
+            if(check==false)
+            {
+                return "where can not be found in this query!!";
+            }
+            for(int count=0;(line=br.readLine())!=null;count++)
+            {
+                if(count==0)
+                {
+                    bw.write(line);
+                    bw.newLine();
+                    sub="";
+                    for(int count1=0;count1<line.length();count1++)
+                    {
+                        char ch=line.charAt(count1);
+                        if(ch==';')
                         {
-                            ct++;
-                            //System.out.println(ct+"="+column);
-                            if(ct==column)
-                            {
-                                //System.out.println("ct==column is true for ct = "+ct);
-                                String condition=data_to_change.substring(data_to_change.indexOf("w"));
-                                String find_where="";
-                                int index_where=0;
-                                while(!"where".equals(find_where))
-                                {
-                                    find_where+=condition.charAt(index_where++);
-                                }
-                                condition=condition.substring(index_where+1);
-                                //System.out.println("condition = "+condition);
-                                //System.out.println(data_to_change.substring(data_to_change.indexOf("(")+1,data_to_change.indexOf(","))+" = "+tmp_line.substring(0,tmp_line.indexOf(";")));
-                                
-                                if(data_to_change.substring(data_to_change.indexOf("(")+1,data_to_change.indexOf(",")).equals(tmp_line.substring(0,tmp_line.indexOf(";"))))
-                                {
-                                    //System.out.println("Entered");
-                                    found=true;
-                                    int a=0;
-                                    int ctr=0;
-                                    for(a=0;a<size;a++){
-                                        //System.out.println(size+" > "+a);
-                                        find_in_line fil=new find_in_line();
-                                        if(fil.find(";"+column_names,";"+cond_colum_name[a]+";"))
-                                        {
-                                            //System.out.println("true");
-                                            //System.out.println(cond_colum_data[a]);
-                                            if(fil.find(";"+line,";"+String.valueOf(cond_colum_data[a])+";")){
-                                                ctr++;
-                                            }
-                                        }
-                                    }
-                                    if(ctr==size)
-                                    {
-                                        String new_line=line.replace( data_to_change.substring(data_to_change.indexOf("(")+1 , data_to_change.indexOf(",")),data_to_change.substring(data_to_change.indexOf(",")+1,data_to_change.indexOf(")")) );
-                                        try( BufferedWriter bw=new BufferedWriter(fw) ; FileReader fr1=new FileReader(f1) ; BufferedReader br1=new BufferedReader(fr1) )
-                                        {
-                                            String read_line;
-                                            for(int l=0;(read_line=br1.readLine())!=null;l++)
-                                            {
-                                                if(l==column+1)
-                                                {
-                                                    bw.write(new_line);
-                                                    bw.newLine();
-                                                }
-                                                else
-                                                {
-                                                    bw.write(read_line);
-                                                    bw.newLine();
-                                                }
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        return "Condition does not match";
-                                    }
-                                }
-                            }
-                            
-                            j=line.indexOf(";");
-                            tmp_line=tmp_line.substring(tmp_line.indexOf(";")+1);
+                            datatype.add(sub);
+                            sub="";
                         }
-                        if(found==false)
+                        else
                         {
-                            return "data not found!!";
+                            sub+=ch;
                         }
                     }
                 }
+                else if(count==1)
+                {
+                    bw.write(line);
+                    bw.newLine();
+                }
+                else if(count==2)
+                {
+                    bw.write(line);
+                    bw.newLine();
+                    sub="";
+                    for(int count1=0;count1<line.length();count1++)
+                    {
+                        char ch=line.charAt(count1);
+                        if(ch==';')
+                        {
+                            columns.add(sub);
+                            sub="";
+                        }
+                        else
+                        {
+                            sub+=ch;
+                        }
+                    }
+                }
+                else if(count>2)
+                {
+                    sub="";
+                    for(int count1=0;count1<line.length();count1++)
+                    {
+                        char ch=line.charAt(count1);
+                        if(ch==';')
+                        {
+                            columns_data.add(sub);
+                            sub="";
+                        }
+                        else
+                        {
+                            sub+=ch;
+                        }
+                    }
+                    String write_line="";
+                    int count2=0;
+                    for(String s:match_columns)
+                    {
+                        int count1=-1;
+                        check=false;
+                        for(String s1:columns)
+                        {
+                            count1++;
+                            if(s1.equals(s))
+                            {
+                                check=true;
+                                if(columns_data.get(count1).equals(match_columns_data.get(count2)))
+                                {
+                                    count2++;
+
+                                }
+                            }
+                        }
+                        if(!check)
+                        {
+                            return "Column name "+s+" not found";
+                        }
+                    }
+
+                    if(count2==match_columns_data.size())
+                    {
+                        count2=-1;
+                        for(String s2:columns)
+                        {
+                            count2++;
+                            if(s2.equals(column_change))
+                            {
+                                write_line+=column_change_data+";";
+                            }
+                            else
+                            {
+                                write_line+=columns_data.get(count2)+";";
+                            }
+                        }
+                        bw.write(write_line);
+                        bw.newLine();
+                    }
+                    else
+                    {
+                        bw.write(line);
+                        bw.newLine();
+                    }
+
+                    columns_data.removeAll(columns_data);
+                }
             }
-            br.close();
-            f1.delete();
-            fw.close();
-            File f2=new File(tmp_path);
-            f2.renameTo(f1);
-            f2.delete();
-            return null;
+        }
+        f1.delete();
+        f2.renameTo(f1);
+        return null;
     }
 }
